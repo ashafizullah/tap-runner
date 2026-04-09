@@ -46,6 +46,7 @@ function createPlayer(id, name, color) {
     position: 0,
     speed: 0,
     tapCount: 0,
+    tapTimestamps: [], // for taps-per-second calculation
     effects: [], // active power-up effects
     finished: false,
     finishTime: 0,
@@ -156,9 +157,10 @@ function updatePlayerSpeed(player, now) {
   // Clean expired effects
   player.effects = player.effects.filter(e => e.endTime > now);
 
-  let speed = 0;
-  let frozen = false;
+  // Clean old tap timestamps (keep only last 1 second)
+  player.tapTimestamps = player.tapTimestamps.filter(t => now - t < 1000);
 
+  let frozen = false;
   for (const effect of player.effects) {
     if (effect.type === 'frozen') frozen = true;
   }
@@ -168,9 +170,9 @@ function updatePlayerSpeed(player, now) {
     return;
   }
 
-  // Base speed from tap count (taps per second mapped to m/s)
-  // More taps = faster, with diminishing returns
-  speed = Math.min(player.tapCount * 0.5, 12); // max 12 m/s
+  // Taps per second → speed (each tap = 1.5 m/s, cap at 15 m/s)
+  // 4 taps/sec = 6 m/s, 7 taps/sec = 10.5 m/s, 10 taps/sec = 15 m/s
+  let speed = Math.min(player.tapTimestamps.length * 1.5, 15);
 
   for (const effect of player.effects) {
     if (effect.type === 'speed') speed *= 1.5;
@@ -240,9 +242,6 @@ function gameLoop(roomId) {
 
     updatePlayerSpeed(player, now);
     player.position += player.speed * dt;
-
-    // Reset tap count each tick (player must keep tapping)
-    player.tapCount = Math.max(0, player.tapCount - 2);
   }
 
   // Check power-up collection
@@ -270,7 +269,7 @@ function gameLoop(roomId) {
         remaining: Math.max(0, e.endTime - now),
       })),
       finished: player.finished,
-      tapCount: player.tapCount,
+      tapCount: player.tapTimestamps.length, // taps per second
     };
   }
 
@@ -382,6 +381,7 @@ io.on('connection', (socket) => {
 
     const player = room.players.get(socket.id);
     if (player && !player.finished) {
+      player.tapTimestamps.push(Date.now());
       player.tapCount += 1;
     }
   });
@@ -403,6 +403,7 @@ io.on('connection', (socket) => {
       player.position = 0;
       player.speed = 0;
       player.tapCount = 0;
+      player.tapTimestamps = [];
       player.effects = [];
       player.finished = false;
       player.finishTime = 0;

@@ -364,7 +364,7 @@
   <!-- HUD -->
   <div id="hud" style="display:none;">
     <div class="hud-item" id="hudDistance">0m / 100m</div>
-    <div class="hud-item" id="hudSpeed">0 m/s</div>
+    <div class="hud-item" id="hudSpeed">0 taps/s</div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -607,7 +607,8 @@
       const my = state[myId];
       if (my) {
         document.getElementById('hudDistance').textContent = `${my.position.toFixed(1)}m / 100m`;
-        document.getElementById('hudSpeed').textContent = `${my.speed.toFixed(1)} m/s`;
+        const tps = my.tapCount || 0;
+        document.getElementById('hudSpeed').textContent = `${tps} taps/s · ${my.speed.toFixed(1)} m/s`;
       }
 
       drawGame();
