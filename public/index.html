@@ -336,6 +336,10 @@
     <button class="btn btn-start" id="startBtn" onclick="startGame()" style="display:none;">
       🏁 START RACE!
     </button>
+
+    <button class="btn btn-secondary" onclick="leaveLobby()" style="margin-top:10px;">
+      ← KEMBALI
+    </button>
   </div>
 
   <!-- Game Screen -->
@@ -522,6 +526,11 @@
     }
 
     function backToMenu() {
+      location.reload();
+    }
+
+    function leaveLobby() {
+      socket.disconnect();
       location.reload();
     }
 
