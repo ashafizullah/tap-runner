@@ -574,7 +574,7 @@
         const nameSpan = document.createElement('span');
         nameSpan.className = 'chat-name';
         nameSpan.style.color = data.color;
-        nameSpan.textContent = data.name + ':';
+        nameSpan.textContent = data.name + (data.id === myId ? ' (kamu)' : '') + ':';
         div.appendChild(nameSpan);
         div.appendChild(document.createTextNode(' ' + data.message));
       }
@@ -739,7 +739,7 @@
     }
 
     function joinGame() {
-      const name = document.getElementById('playerName').value.trim() || 'Player';
+      const name = document.getElementById('playerName').value.trim();
       let code = document.getElementById('roomCode').value.trim().toUpperCase();
       if (!code) code = generateRoomCode();
 

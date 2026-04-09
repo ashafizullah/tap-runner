@@ -81,6 +81,7 @@ function registerSocketHandlers(io, rooms) {
       if (!text) return;
 
       io.to(room.id).emit('chatMessage', {
+        id: player.id,
         name: player.name,
         color: player.color,
         message: text,
