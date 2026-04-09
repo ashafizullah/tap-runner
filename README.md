@@ -96,9 +96,18 @@ Client (Browser)                    Server (Node.js)
 
 ```
 tap-runner/
-├── server.js          # Game server + Socket.io logic
+├── server.js                   # Entry point — Express + Socket.io bootstrap
+├── src/
+│   ├── config.js               # Game constants & configuration
+│   ├── game/
+│   │   ├── Room.js             # Room creation, reset, player list
+│   │   ├── Player.js           # Player creation, speed calculation, state
+│   │   ├── PowerUp.js          # Power-up spawn, apply, collection check
+│   │   └── GameLoop.js         # Game loop, countdown, finish check
+│   └── handlers/
+│       └── socket.js           # Socket.io event handlers
 ├── public/
-│   └── index.html     # Frontend (canvas, UI, socket client)
+│   └── index.html              # Frontend (canvas, UI, socket client)
 ├── package.json
 └── README.md
 ```
