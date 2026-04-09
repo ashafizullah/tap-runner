@@ -1093,12 +1093,13 @@
         ctx.drawImage(sprite, x - drawW / 2, laneY - drawH / 2, drawW, drawH);
 
         // Name tag
+        const displayName = p.name + (pId === myId ? ' (kamu)' : '');
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.font = '8px "Press Start 2P"';
-        const nameWidth = ctx.measureText(p.name).width;
+        const nameWidth = ctx.measureText(displayName).width;
         ctx.fillRect(x - nameWidth / 2 - 4, laneY - drawH / 2 - 14, nameWidth + 8, 12);
-        ctx.fillStyle = p.color;
-        ctx.fillText(p.name, x - nameWidth / 2, laneY - drawH / 2 - 4);
+        ctx.fillStyle = pId === myId ? '#f1c40f' : p.color;
+        ctx.fillText(displayName, x - nameWidth / 2, laneY - drawH / 2 - 4);
 
         // Effect indicators
         for (const effect of state.effects) {
