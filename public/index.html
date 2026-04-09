@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🏃 Tap Runner</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      color: #eee;
+      font-family: 'Press Start 2P', monospace;
+      overflow: hidden;
+      height: 100vh;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 20px;
+    }
+
+    #menu h1 {
+      font-size: 28px;
+      color: #f1c40f;
+      text-shadow: 3px 3px 0 #e74c3c;
+      margin-bottom: 10px;
+    }
+
+    #menu .subtitle {
+      font-size: 10px;
+      color: #7f8c8d;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 300px;
+    }
+
+    .input-group label {
+      font-size: 10px;
+      color: #95a5a6;
+    }
+
+    .input-group input {
+      padding: 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      background: #16213e;
+      border: 2px solid #0f3460;
+      color: #eee;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: #f1c40f;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-primary {
+      background: #f1c40f;
+      color: #1a1a2e;
+    }
+
+    .btn-secondary {
+      background: #2ecc71;
+      color: #1a1a2e;
+    }
+
+    .btn-start {
+      background: #e74c3c;
+      color: white;
+      font-size: 16px;
+    }
+
+    .btn-restart {
+      background: #3498db;
+      color: white;
+    }
+
+    /* Lobby */
+    #lobby {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 20px;
+    }
+
+    #lobby h2 {
+      font-size: 18px;
+      color: #f1c40f;
+    }
+
+    .room-code {
+      font-size: 24px;
+      color: #2ecc71;
+      background: #16213e;
+      padding: 15px 30px;
+      border-radius: 8px;
+      letter-spacing: 4px;
+    }
+
+    .player-list {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .player-card {
+      background: #16213e;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: 2px solid #0f3460;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Game */
+    #game {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    canvas {
+      flex: 1;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #tap-zone {
+      height: 120px;
+      background: linear-gradient(to top, #e74c3c, #c0392b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #tap-zone span {
+      font-size: 16px;
+      color: white;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    }
+
+    #tap-zone .hint {
+      font-size: 8px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    #tap-zone:active {
+      background: linear-gradient(to top, #e67e22, #d35400);
+    }
+
+    /* Power-up notification */
+    #power-up-notify {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 10px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    #power-up-notify.show {
+      opacity: 1;
+    }
+
+    /* Countdown overlay */
+    #countdown {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      font-size: 80px;
+      color: #f1c40f;
+      text-shadow: 4px 4px 0 #e74c3c;
+    }
+
+    /* Results */
+    #results {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 200;
+    }
+
+    #results h2 {
+      font-size: 24px;
+      color: #f1c40f;
+    }
+
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 350px;
+    }
+
+    .rank-item {
+      background: #16213e;
+      padding: 12px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 10px;
+    }
+
+    .rank-item:first-child {
+      border: 2px solid #f1c40f;
+      background: rgba(241, 196, 15, 0.1);
+    }
+
+    .rank-pos {
+      font-size: 20px;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .rank-time {
+      margin-left: auto;
+      color: #95a5a6;
+    }
+
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .hud-item {
+      background: rgba(0,0,0,0.6);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .waiting-msg {
+      font-size: 10px;
+      color: #7f8c8d;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Screen -->
+  <div id="menu">
+    <h1>🏃 TAP RUNNER</h1>
+    <p class="subtitle">Tekan SPASI secepatnya!</p>
+
+    <div class="input-group">
+      <label>NAMA KAMU</label>
+      <input type="text" id="playerName" placeholder="Player" maxlength="12">
+    </div>
+
+    <div class="input-group">
+      <label>ROOM CODE (kosongkan untuk buat baru)</label>
+      <input type="text" id="roomCode" placeholder="XXXX" maxlength="6" style="text-transform: uppercase;">
+    </div>
+
+    <button class="btn btn-primary" onclick="joinGame()">MASUK ROOM</button>
+  </div>
+
+  <!-- Lobby Screen -->
+  <div id="lobby">
+    <h2>LOBBY</h2>
+    <div class="room-code" id="lobbyRoomCode">XXXX</div>
+    <p class="waiting-msg" id="waitingMsg">Menunggu player lain...</p>
+
+    <div class="player-list" id="playerList"></div>
+
+    <button class="btn btn-start" id="startBtn" onclick="startGame()" style="display:none;">
+      🏁 START RACE!
+    </button>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game">
+    <canvas id="gameCanvas"></canvas>
+    <div id="tap-zone" ontouchstart="handleTap()" onclick="handleTap()">
+      <span>⬛ TAP! ⬛</span>
+      <div class="hint">atau tekan SPASI</div>
+    </div>
+  </div>
+
+  <!-- Countdown -->
+  <div id="countdown"></div>
+
+  <!-- Power-up notification -->
+  <div id="power-up-notify"></div>
+
+  <!-- Results -->
+  <div id="results">
+    <h2 id="resultTitle">🏆 HASIL LOMBA</h2>
+    <div class="rank-list" id="rankList"></div>
+    <button class="btn btn-restart" onclick="restartGame()">🔄 MAIN LAGI</button>
+    <button class="btn btn-secondary" onclick="backToMenu()">🏠 MENU</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" style="display:none;">
+    <div class="hud-item" id="hudDistance">0m / 100m</div>
+    <div class="hud-item" id="hudSpeed">0 m/s</div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ─── Connection ───
+    const socket = io();
+
+    // ─── State ───
+    let myId = null;
+    let currentRoom = null;
+    let players = [];
+    let gameState = {};
+    let gameRunning = false;
+    let powerUps = [];
+    let countdownActive = false;
+
+    // ─── Canvas ───
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // ─── Pixel Art Sprites (generated) ───
+    const SPRITE_WIDTH = 16;
+    const SPRITE_HEIGHT = 24;
+    const PIXEL_SCALE = 2;
+
+    function generateSprite(color) {
+      const c = document.createElement('canvas');
+      c.width = SPRITE_WIDTH;
+      c.height = SPRITE_HEIGHT;
+      const cx = c.getContext('2d');
+
+      // Simple pixel art runner
+      const px = (x, y, w = 1, h = 1) => {
+        cx.fillStyle = color;
+        cx.fillRect(x, y, w, h);
+      };
+
+      // Head
+      px(5, 0, 6, 5);
+      cx.fillStyle = '#ffe0bd';
+      px(6, 1, 4, 3);
+
+      // Eyes
+      cx.fillStyle = '#000';
+      px(7, 2); px(9, 2);
+
+      // Body
+      px(color === '#e74c3c' ? 5 : 5, 5, 6, 8);
+
+      // Arms
+      px(3, 6, 2, 4);
+      px(11, 6, 2, 4);
+
+      // Legs (running pose)
+      px(5, 13, 2, 6);
+      px(9, 13, 2, 6);
+
+      // Feet
+      px(4, 19, 3, 2);
+      px(9, 19, 3, 2);
+
+      return c;
+    }
+
+    // ─── Pixel Art Power-ups ───
+    function drawPowerUpOnCanvas(ctx, x, y, type, size = 24) {
+      const s = size / 16;
+      const px = (px, py, color) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(x + px * s, y + py * s, s, s);
+      };
+
+      switch (type) {
+        case 'speed': // Lightning bolt ⚡
+          ctx.fillStyle = '#f1c40f';
+          ctx.fillRect(x + 6*s, y, 4*s, s);
+          ctx.fillRect(x + 5*s, y + s, 4*s, s);
+          ctx.fillRect(x + 4*s, y + 2*s, 5*s, s);
+          ctx.fillRect(x + 6*s, y + 3*s, 4*s, s);
+          ctx.fillRect(x + 7*s, y + 4*s, 3*s, s);
+          ctx.fillRect(x + 8*s, y + 5*s, 2*s, s);
+          ctx.fillRect(x + 6*s, y + 6*s, 3*s, s);
+          ctx.fillRect(x + 4*s, y + 7*s, 4*s, s);
+          ctx.fillRect(x + 3*s, y + 8*s, 4*s, s);
+          break;
+
+        case 'freeze': // Snowflake 🧊
+          ctx.fillStyle = '#74b9ff';
+          ctx.fillRect(x + 7*s, y, 2*s, s);
+          ctx.fillRect(x + 7*s, y + s, 2*s, s);
+          ctx.fillRect(x + 4*s, y + 2*s, 8*s, s);
+          ctx.fillRect(x + 7*s, y + 3*s, 2*s, s);
+          ctx.fillRect(x + 7*s, y + 4*s, 2*s, s);
+          ctx.fillRect(x + 7*s, y + 5*s, 2*s, s);
+          ctx.fillRect(x + 4*s, y + 6*s, 8*s, s);
+          ctx.fillRect(x + 7*s, y + 7*s, 2*s, s);
+          ctx.fillRect(x + 7*s, y + 8*s, 2*s, s);
+          break;
+
+        case 'slow': // Snail 🐌
+          ctx.fillStyle = '#e17055';
+          ctx.fillRect(x + 8*s, y + 2*s, 4*s, 4*s);
+          ctx.fillRect(x + 6*s, y + 3*s, 2*s, 3*s);
+          ctx.fillRect(x + 4*s, y + 6*s, 8*s, 2*s);
+          ctx.fillStyle = '#fdcb6e';
+          ctx.fillRect(x + 2*s, y + s, 2*s, s);
+          ctx.fillRect(x + s, y + 2*s, 2*s, s);
+          break;
+
+        case 'dash': // Arrow 🦘
+          ctx.fillStyle = '#00b894';
+          ctx.fillRect(x + 10*s, y + 3*s, 4*s, 2*s);
+          ctx.fillRect(x + 8*s, y + 2*s, 2*s, s);
+          ctx.fillRect(x + 8*s, y + 5*s, 2*s, s);
+          ctx.fillRect(x + 6*s, y + s, 2*s, s);
+          ctx.fillRect(x + 6*s, y + 6*s, 2*s, s);
+          ctx.fillRect(x + 2*s, y + 3*s, 6*s, 2*s);
+          break;
+      }
+    }
+
+    // ─── Screen Management ───
+    function showScreen(id) {
+      ['menu', 'lobby', 'game', 'results', 'countdown'].forEach(s => {
+        document.getElementById(s).style.display = 'none';
+      });
+      document.getElementById(id).style.display = id === 'game' ? 'flex' : id === 'results' || id === 'countdown' ? 'flex' : 'flex';
+      document.getElementById('hud').style.display = id === 'game' ? 'flex' : 'none';
+    }
+
+    // ─── Menu Actions ───
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
+    }
+
+    function joinGame() {
+      const name = document.getElementById('playerName').value.trim() || 'Player';
+      let code = document.getElementById('roomCode').value.trim().toUpperCase();
+      if (!code) code = generateRoomCode();
+
+      currentRoom = code;
+      socket.emit('joinRoom', { roomId: code, playerName: name });
+    }
+
+    function startGame() {
+      socket.emit('startGame');
+    }
+
+    function restartGame() {
+      socket.emit('restartGame');
+      document.getElementById('results').style.display = 'none';
+    }
+
+    function backToMenu() {
+      location.reload();
+    }
+
+    // ─── Tap Handler ───
+    function handleTap() {
+      if (!gameRunning) return;
+      socket.emit('tap');
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleTap();
+      }
+    });
+
+    // ─── Socket Events ───
+    socket.on('joinedRoom', (data) => {
+      myId = data.playerId;
+      currentRoom = data.roomId;
+      players = data.players;
+
+      showScreen('lobby');
+      document.getElementById('lobbyRoomCode').textContent = data.roomId;
+
+      updatePlayerList();
+
+      // Show start button if first player
+      if (data.players.length > 0 && data.players[0].id === myId) {
+        document.getElementById('startBtn').style.display = 'block';
+      }
+    });
+
+    socket.on('playerJoined', (player) => {
+      players.push(player);
+      updatePlayerList();
+
+      // Show start button when enough players
+      if (players.length >= 2 && players[0].id === myId) {
+        document.getElementById('startBtn').style.display = 'block';
+      }
+    });
+
+    socket.on('playerLeft', (data) => {
+      players = players.filter(p => p.id !== data.playerId);
+      updatePlayerList();
+    });
+
+    function updatePlayerList() {
+      const list = document.getElementById('playerList');
+      list.innerHTML = players.map(p => `
+        <div class="player-card">
+          <div class="player-dot" style="background: ${p.color}"></div>
+          <span>${p.name}${p.id === myId ? ' (kamu)' : ''}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('waitingMsg').textContent =
+        players.length < 2 ? 'Menunggu player lain...' : `${players.length}/4 player siap!`;
+    }
+
+    socket.on('countdown', (data) => {
+      countdownActive = true;
+      showScreen('game');
+      const el = document.getElementById('countdown');
+      el.style.display = 'flex';
+      el.textContent = data.count;
+    });
+
+    socket.on('raceStart', () => {
+      countdownActive = false;
+      gameRunning = true;
+      document.getElementById('countdown').style.display = 'none';
+      showScreen('game');
+      resizeCanvas();
+    });
+
+    socket.on('gameState', (state) => {
+      gameState = state;
+
+      // Update HUD for my player
+      const my = state[myId];
+      if (my) {
+        document.getElementById('hudDistance').textContent = `${my.position.toFixed(1)}m / 100m`;
+        document.getElementById('hudSpeed').textContent = `${my.speed.toFixed(1)} m/s`;
+      }
+
+      drawGame();
+    });
+
+    socket.on('powerUpSpawned', (pu) => {
+      powerUps.push(pu);
+    });
+
+    socket.on('powerUpCollected', (data) => {
+      powerUps = powerUps.filter(p => p.id !== data.powerUpId);
+    });
+
+    socket.on('powerUpUsed', (data) => {
+      showPowerUpNotification(data);
+    });
+
+    function showPowerUpNotification(data) {
+      const el = document.getElementById('powerUp-notify');
+      const messages = {
+        speed: `${data.emoji} ${data.name} dapat Speed Boost!`,
+        freeze: `${data.emoji} ${data.name} membekukan semua musuh!`,
+        slow: `${data.emoji} ${data.name} memperlambat musuh!`,
+        dash: `${data.emoji} ${data.name} Dash ke depan!`,
+      };
+      el.textContent = messages[data.type] || '';
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2000);
+    }
+
+    socket.on('playerFinished', (data) => {
+      // Optional: show individual finish notification
+    });
+
+    socket.on('winner', (data) => {
+      // Could show winner celebration
+    });
+
+    socket.on('gameFinished', (data) => {
+      gameRunning = false;
+      showResults(data.rankings);
+    });
+
+    socket.on('gameRestarted', (data) => {
+      players = data.players;
+      powerUps = [];
+      gameState = {};
+      gameRunning = false;
+      document.getElementById('results').style.display = 'none';
+      showScreen('lobby');
+      updatePlayerList();
+    });
+
+    socket.on('error', (data) => {
+      alert(data.message);
+    });
+
+    // ─── Results ───
+    function showResults(rankings) {
+      document.getElementById('results').style.display = 'flex';
+
+      const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+      const list = document.getElementById('rankList');
+      list.innerHTML = rankings.map((r, i) => `
+        <div class="rank-item" style="border-color: ${i === 0 ? '#f1c40f' : '#0f3460'}">
+          <div class="rank-pos">${medals[i] || (i + 1)}</div>
+          <div class="player-dot" style="background: ${r.color}"></div>
+          <span>${r.name}</span>
+          <span class="rank-time">${(r.time / 1000).toFixed(2)}s</span>
+        </div>
+      `).join('');
+
+      // Check if I won
+      if (rankings[0]?.id === myId) {
+        document.getElementById('resultTitle').textContent = '🏆 KAMU MENANG!';
+      } else {
+        document.getElementById('resultTitle').textContent = '🏆 HASIL LOMBA';
+      }
+    }
+
+    // ─── Canvas Rendering ───
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight - 120; // minus tap zone
+    }
+
+    window.addEventListener('resize', () => {
+      if (gameRunning || countdownActive) resizeCanvas();
+    });
+
+    function drawGame() {
+      if (!ctx || !canvas.width) return;
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // Clear
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(0, 0, W, H);
+
+      // Track background
+      const trackTop = 60;
+      const trackHeight = H - trackTop - 20;
+      const laneHeight = trackHeight / 4;
+
+      // Grass
+      ctx.fillStyle = '#2ecc71';
+      ctx.fillRect(0, trackTop - 20, W, 20);
+
+      // Dirt track
+      ctx.fillStyle = '#d4a574';
+      ctx.fillRect(0, trackTop, W, trackHeight);
+
+      // Lane lines
+      for (let i = 0; i <= 4; i++) {
+        const y = trackTop + i * laneHeight;
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Distance markers
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '10px "Press Start 2P"';
+      for (let m = 0; m <= 100; m += 10) {
+        const x = (m / 100) * (W - 100) + 50;
+        ctx.fillText(`${m}m`, x - 10, trackTop + trackHeight + 15);
+
+        // Vertical marker line
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath();
+        ctx.moveTo(x, trackTop);
+        ctx.lineTo(x, trackTop + trackHeight);
+        ctx.stroke();
+      }
+
+      // Finish line
+      const finishX = W - 60;
+      ctx.fillStyle = '#fff';
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 3; col++) {
+          if ((row + col) % 2 === 0) {
+            ctx.fillRect(finishX + col * 8, trackTop + row * (trackHeight / 8), 8, trackHeight / 8);
+          }
+        }
+      }
+      ctx.fillStyle = '#000';
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 3; col++) {
+          if ((row + col) % 2 !== 0) {
+            ctx.fillRect(finishX + col * 8, trackTop + row * (trackHeight / 8), 8, trackHeight / 8);
+          }
+        }
+      }
+
+      // Draw power-ups
+      for (const pu of powerUps) {
+        if (pu.collected) continue;
+        const puX = (pu.position / 100) * (finishX - 50) + 50;
+        const puY = trackTop + laneHeight * 0.5;
+
+        // Glow effect
+        ctx.shadowColor = pu.type === 'speed' ? '#f1c40f' :
+                          pu.type === 'freeze' ? '#74b9ff' :
+                          pu.type === 'slow' ? '#e17055' : '#00b894';
+        ctx.shadowBlur = 10;
+
+        drawPowerUpOnCanvas(ctx, puX - 12, puY - 12, pu.type, 24);
+
+        ctx.shadowBlur = 0;
+
+        // Floating animation
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(pu.emoji, puX - 6, puY + 20);
+      }
+
+      // Draw players
+      const spriteCache = {};
+      for (const pId of Object.keys(gameState)) {
+        const p = players.find(pl => pl.id === pId);
+        if (!p) continue;
+
+        const state = gameState[pId];
+        const lane = p.lane || 0;
+        const laneY = trackTop + lane * laneHeight + laneHeight / 2;
+
+        // Position
+        const x = (state.position / 100) * (finishX - 50) + 50;
+
+        // Generate sprite if not cached
+        if (!spriteCache[p.color]) {
+          spriteCache[p.color] = generateSprite(p.color);
+        }
+
+        // Draw sprite
+        const sprite = spriteCache[p.color];
+        const drawW = SPRITE_WIDTH * PIXEL_SCALE;
+        const drawH = SPRITE_HEIGHT * PIXEL_SCALE;
+
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sprite, x - drawW / 2, laneY - drawH / 2, drawW, drawH);
+
+        // Name tag
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.font = '8px "Press Start 2P"';
+        const nameWidth = ctx.measureText(p.name).width;
+        ctx.fillRect(x - nameWidth / 2 - 4, laneY - drawH / 2 - 14, nameWidth + 8, 12);
+        ctx.fillStyle = p.color;
+        ctx.fillText(p.name, x - nameWidth / 2, laneY - drawH / 2 - 4);
+
+        // Effect indicators
+        for (const effect of state.effects) {
+          const emoji = effect.type === 'speed' ? '⚡' :
+                        effect.type === 'frozen' ? '🧊' :
+                        effect.type === 'slowed' ? '🐌' : '';
+          if (emoji) {
+            ctx.font = '14px sans-serif';
+            ctx.fillText(emoji, x + drawW / 2 + 2, laneY - drawH / 4);
+          }
+        }
+
+        // Finished indicator
+        if (state.finished) {
+          ctx.font = '16px sans-serif';
+          ctx.fillText('🏁', x + drawW / 2 + 4, laneY);
+        }
+      }
+
+      // Sun
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.arc(W - 80, 35, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clouds
+      drawCloud(ctx, 100, 25, 0.8);
+      drawCloud(ctx, 350, 15, 0.6);
+      drawCloud(ctx, 550, 30, 1);
+    }
+
+    function drawCloud(ctx, x, y, scale) {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.beginPath();
+      ctx.arc(x, y, 15 * scale, 0, Math.PI * 2);
+      ctx.arc(x + 20 * scale, y - 5, 20 * scale, 0, Math.PI * 2);
+      ctx.arc(x + 40 * scale, y, 15 * scale, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Init
+    resizeCanvas();
+  </script>
+</body>
+</html>
