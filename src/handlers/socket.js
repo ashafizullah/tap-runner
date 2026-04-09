@@ -27,7 +27,8 @@ function registerSocketHandlers(io, rooms) {
         return;
       }
 
-      const player = addPlayer(room, socket.id, playerName);
+      const name = String(playerName || '').slice(0, 10).trim();
+      const player = addPlayer(room, socket.id, name || undefined);
       socket.join(roomId);
       socket.roomId = roomId;
 
