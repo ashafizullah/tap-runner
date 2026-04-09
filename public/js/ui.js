@@ -78,8 +78,15 @@ function updatePlayerList() {
     </div>
   `).join('');
 
+  const host = players[0];
+  const isHost = host && host.id === myId;
+
   document.getElementById('waitingMsg').textContent =
-    players.length < 2 ? 'Menunggu player lain...' : `${players.length}/4 player siap!`;
+    players.length < 2
+      ? (isHost ? 'Menunggu player lain...' : `Menunggu ${host?.name || 'host'} mulai...`)
+      : (isHost
+          ? `${players.length}/4 player siap! Tekan START!`
+          : `${players.length}/4 player siap! Menunggu ${host?.name || 'host'} tekan START...`);
 }
 
 // ─── HUD ───
