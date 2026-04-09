@@ -7,7 +7,7 @@ const PIXEL_SCALE = 2;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-function generateSprite(color) {
+function generateSprite(color, frame = 0) {
   const c = document.createElement('canvas');
   c.width = SPRITE_WIDTH;
   c.height = SPRITE_HEIGHT;
@@ -30,17 +30,35 @@ function generateSprite(color) {
   // Body
   px(5, 5, 6, 8);
 
-  // Arms
-  px(3, 6, 2, 4);
-  px(11, 6, 2, 4);
+  // Arms — alternate based on frame
+  if (frame === 0) {
+    // Left arm forward, right arm back
+    px(2, 6, 2, 5);   // left arm forward
+    px(12, 7, 2, 4);  // right arm back
+  } else {
+    // Right arm forward, left arm back
+    px(2, 7, 2, 4);   // left arm back
+    px(12, 6, 2, 5);  // right arm forward
+  }
 
-  // Legs
-  px(5, 13, 2, 6);
-  px(9, 13, 2, 6);
-
-  // Feet
-  px(4, 19, 3, 2);
-  px(9, 19, 3, 2);
+  // Legs — alternate based on frame
+  if (frame === 0) {
+    // Left leg forward, right leg back
+    px(4, 13, 2, 7);   // left leg forward (extended)
+    px(9, 14, 2, 5);   // right leg back (bent)
+    // Feet
+    cx.fillStyle = '#333';
+    px(3, 19, 3, 2);   // left foot forward
+    px(9, 18, 3, 2);   // right foot up
+  } else {
+    // Right leg forward, left leg back
+    px(4, 14, 2, 5);   // left leg back (bent)
+    px(10, 13, 2, 7);  // right leg forward (extended)
+    // Feet
+    cx.fillStyle = '#333';
+    px(4, 18, 3, 2);   // left foot up
+    px(10, 19, 3, 2);  // right foot forward
+  }
 
   return c;
 }
@@ -188,6 +206,8 @@ function drawGame() {
 
   // Draw players
   const spriteCache = {};
+  const animFrame = Math.floor(Date.now() / 150) % 2; // alternate every 150ms
+
   for (const pId of Object.keys(gameState)) {
     const p = players.find(pl => pl.id === pId);
     if (!p) continue;
@@ -197,11 +217,14 @@ function drawGame() {
     const laneY = trackTop + lane * laneHeight + laneHeight / 2;
     const x = (state.position / 100) * (finishX - 50) + 50;
 
-    if (!spriteCache[p.color]) {
-      spriteCache[p.color] = generateSprite(p.color);
+    // Use animation frame if moving, frame 0 if standing still
+    const frame = state.speed > 0.1 ? animFrame : 0;
+    const cacheKey = `${p.color}_${frame}`;
+    if (!spriteCache[cacheKey]) {
+      spriteCache[cacheKey] = generateSprite(p.color, frame);
     }
 
-    const sprite = spriteCache[p.color];
+    const sprite = spriteCache[cacheKey];
     const drawW = SPRITE_WIDTH * PIXEL_SCALE;
     const drawH = SPRITE_HEIGHT * PIXEL_SCALE;
 
