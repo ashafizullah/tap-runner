@@ -102,7 +102,7 @@ function showResults(rankings) {
     <div class="rank-item" style="border-color: ${i === 0 ? '#f1c40f' : '#0f3460'}">
       <div class="rank-pos">${medals[i] || (i + 1)}</div>
       <div class="player-dot" style="background: ${r.color}"></div>
-      <span>${r.name}</span>
+      <span>${r.name}${r.id === myId ? ' (kamu)' : ''}</span>
       <span class="rank-time">${(r.time / 1000).toFixed(2)}s</span>
     </div>
   `).join('');
