@@ -525,13 +525,19 @@
       location.reload();
     }
 
-    // ─── Tap Handler ───
+    // ─── Tap Handler (anti-hold: 100ms cooldown between taps) ───
+    let lastTapTime = 0;
+    const TAP_COOLDOWN = 100; // ms
+
     function handleTap() {
       if (!gameRunning) return;
+      const now = Date.now();
+      if (now - lastTapTime < TAP_COOLDOWN) return;
+      lastTapTime = now;
       socket.emit('tap');
     }
 
-    // Keyboard
+    // Keyboard (prevent hold from spamming)
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
         e.preventDefault();

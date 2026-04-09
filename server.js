@@ -375,15 +375,22 @@ io.on('connection', (socket) => {
     }, 1000);
   });
 
+  let lastTapTime = {};
+
   socket.on('tap', () => {
     const room = rooms.get(socket.roomId);
     if (!room || room.state !== 'racing') return;
 
     const player = room.players.get(socket.id);
-    if (player && !player.finished) {
-      player.tapTimestamps.push(Date.now());
-      player.tapCount += 1;
-    }
+    if (!player || player.finished) return;
+
+    // Server-side anti-hold: reject taps faster than 80ms apart
+    const now = Date.now();
+    if (lastTapTime[socket.id] && now - lastTapTime[socket.id] < 80) return;
+    lastTapTime[socket.id] = now;
+
+    player.tapTimestamps.push(now);
+    player.tapCount += 1;
   });
 
   socket.on('restartGame', () => {
@@ -420,6 +427,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    delete lastTapTime[socket.id];
+
     const room = rooms.get(socket.roomId);
     if (room) {
       room.players.delete(socket.id);
