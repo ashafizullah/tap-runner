@@ -347,7 +347,7 @@
     <canvas id="gameCanvas"></canvas>
     <div id="tap-zone" ontouchstart="handleTap()" onclick="handleTap()">
       <span>⬛ TAP! ⬛</span>
-      <div class="hint">atau tekan SPASI</div>
+      <div class="hint">klik / tap secepatnya!</div>
     </div>
   </div>
 
@@ -546,13 +546,7 @@
       socket.emit('tap');
     }
 
-    // Keyboard (prevent hold from spamming)
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        handleTap();
-      }
-    });
+    // Keyboard disabled — desktop must click/tap like mobile
 
     // ─── Socket Events ───
     socket.on('joinedRoom', (data) => {
