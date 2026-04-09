@@ -69,6 +69,25 @@ function registerSocketHandlers(io, rooms) {
       player.tapCount += 1;
     });
 
+    socket.on('chat', ({ message }) => {
+      const room = rooms.get(socket.roomId);
+      if (!room) return;
+
+      const player = room.players.get(socket.id);
+      if (!player) return;
+
+      // Sanitize & limit message length
+      const text = String(message).slice(0, 100).trim();
+      if (!text) return;
+
+      io.to(room.id).emit('chatMessage', {
+        name: player.name,
+        color: player.color,
+        message: text,
+        timestamp: Date.now(),
+      });
+    });
+
     socket.on('restartGame', () => {
       const room = rooms.get(socket.roomId);
       if (!room) return;
