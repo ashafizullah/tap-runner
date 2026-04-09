@@ -184,7 +184,6 @@ function updatePlayerSpeed(player, now) {
 
 function checkFinish(room) {
   const now = Date.now();
-  let allFinished = true;
 
   for (const [pid, player] of room.players) {
     if (player.position >= FINISH_LINE && !player.finished) {
@@ -198,13 +197,7 @@ function checkFinish(room) {
         position: room.rankings.length + 1,
       });
 
-      io.to(room.id).emit('playerFinished', {
-        playerId: pid,
-        name: player.name,
-        position: room.rankings.length,
-        time: player.finishTime,
-      });
-
+      // First player to finish = winner → end game immediately
       if (!room.winner) {
         room.winner = pid;
         io.to(room.id).emit('winner', {
@@ -212,19 +205,38 @@ function checkFinish(room) {
           name: player.name,
           time: player.finishTime,
         });
+
+        // Rank remaining players by current position
+        const unfinished = [...room.players.entries()]
+          .filter(([p]) => p !== pid && !room.players.get(p).finished)
+          .sort((a, b) => b[1].position - a[1].position);
+
+        for (const [up, uplayer] of unfinished) {
+          // Estimate time based on winner's time and progress ratio
+          const ratio = uplayer.position / FINISH_LINE;
+          const estimatedTime = ratio > 0.05
+            ? Math.round(player.finishTime / ratio)
+            : player.finishTime * 2;
+
+          room.rankings.push({
+            id: up,
+            name: uplayer.name,
+            color: uplayer.color,
+            time: estimatedTime,
+            position: room.rankings.length + 1,
+          });
+        }
+
+        // End game now
+        room.state = 'finished';
+        io.to(room.id).emit('gameFinished', { rankings: room.rankings });
+
+        if (room.powerUpTimer) {
+          clearInterval(room.powerUpTimer);
+          room.powerUpTimer = null;
+        }
+        return;
       }
-    }
-
-    if (!player.finished) allFinished = false;
-  }
-
-  if (allFinished || (room.rankings.length > 0 && now - room.startTime > 60000)) {
-    room.state = 'finished';
-    io.to(room.id).emit('gameFinished', { rankings: room.rankings });
-
-    if (room.powerUpTimer) {
-      clearInterval(room.powerUpTimer);
-      room.powerUpTimer = null;
     }
   }
 }
